@@ -4,11 +4,12 @@ const multer = require("multer");
 const nodemailer = require("nodemailer");
 const xlsx = require("xlsx");
 const cors = require("cors");
+
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Multer setup to store files in memory (not in disk)
+// Multer setup to store files in memory
 const upload = multer({ storage: multer.memoryStorage() });
 
 const transporter = nodemailer.createTransport({
@@ -25,7 +26,7 @@ function isValidEmail(email) {
   return emailRegex.test(email);
 }
 
-// API to handle file upload and send emails
+// API to handle file upload and send personalized emails
 app.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
@@ -38,19 +39,28 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     let invalidEmails = [];
 
     for (let row of sheetData) {
-      const email = row.Mail|| row.mail;
+      const email = row.Mail || row.mail;
+      const name = row.Name || "Student";
+      delete row.Email;
+      delete row.Name;
 
       if (!email || !isValidEmail(email)) {
         invalidEmails.push(email || "Empty Email");
         continue;
       }
 
+      const subjects = Object.keys(row).map(
+        (subject) => `${subject}: ${row[subject]}`
+      ).join("\n");
+      
+      const message = `Hello ${name}'s parents,\n\nWe are pleased to share the recent academic scores of your child:\n\n${subjects}\n\nThank you.`;
+
       try {
         await transporter.sendMail({
-          from: `"Your Name" <${process.env.EMAIL_USER}>`,
+          from: `VCET <${process.env.EMAIL_USER}>`,
           to: email,
-          subject: "Test Email",
-          text: "This is a test email sent from Node.js",
+          subject: "Student Academic Report",
+          text: message,
         });
         sentEmails.push(email);
       } catch (err) {

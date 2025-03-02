@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-
 const App = () => {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
@@ -25,7 +24,7 @@ const App = () => {
       });
 
       const { sentEmails, invalidEmails } = response.data;
-
+      
       if (invalidEmails.length > 0) {
         setMessage(`Emails sent: ${sentEmails.length}, Invalid emails: ${invalidEmails.join(", ")}`);
       } else {
